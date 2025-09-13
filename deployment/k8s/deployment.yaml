@@ -1,0 +1,108 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: diffusion-api
+  namespace: diffusion-gen-studio
+  labels:
+    app: diffusion-api
+    version: v1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: diffusion-api
+  template:
+    metadata:
+      labels:
+        app: diffusion-api
+        version: v1
+    spec:
+      nodeSelector:
+        # Ensure pods are scheduled on GPU nodes
+        node.kubernetes.io/instance-type: "g4dn.xlarge"
+      tolerations:
+      - key: nvidia.com/gpu
+        operator: Exists
+        effect: NoSchedule
+      containers:
+      - name: diffusion-api
+        image: your-registry/diffusion-gen-studio:latest
+        ports:
+        - containerPort: 5000
+          name: http
+        - containerPort: 8000
+          name: metrics
+        envFrom:
+        - configMapRef:
+            name: diffusion-config
+        env:
+        - name: PORT
+          value: "5000"
+        resources:
+          requests:
+            memory: "8Gi"
+            cpu: "2"
+            nvidia.com/gpu: 1
+          limits:
+            memory: "16Gi"
+            cpu: "4"
+            nvidia.com/gpu: 1
+        volumeMounts:
+        - name: model-cache
+          mountPath: /app/cache
+        - name: shm
+          mountPath: /dev/shm
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 120
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 5000
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 12
+      volumes:
+      - name: model-cache
+        emptyDir:
+          sizeLimit: 50Gi
+      - name: shm
+        emptyDir:
+          medium: Memory
+          sizeLimit: 2Gi
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: diffusion-api-service
+  namespace: diffusion-gen-studio
+  labels:
+    app: diffusion-api
+spec:
+  selector:
+    app: diffusion-api
+  ports:
+  - name: http
+    port: 80
+    targetPort: 5000
+    protocol: TCP
+  - name: metrics
+    port: 8000
+    targetPort: 8000
+    protocol: TCP
+  type: ClusterIP

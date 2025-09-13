@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: diffusion-config
+  namespace: diffusion-gen-studio
+data:
+  FLASK_ENV: "production"
+  LOG_LEVEL: "INFO"
+  REDIS_HOST: "redis-service"
+  REDIS_PORT: "6379"
+  MODEL_CACHE_DIR: "/app/cache"
+  MAX_BATCH_SIZE: "4"
+  DEFAULT_STEPS: "30"
+  MAX_STEPS: "50"
+  MAX_RESOLUTION: "1024"
+  ENABLE_PROMETHEUS: "true"
+  PROMETHEUS_PORT: "8000"
