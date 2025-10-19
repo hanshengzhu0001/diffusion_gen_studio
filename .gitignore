@@ -63,6 +63,11 @@ temp_output.*
 *.jpg
 *.jpeg
 
+# Exception: Documentation images and GIFs
+!docs/images/*.png
+!docs/images/*.gif
+!docs/gifs/*.gif
+
 # Logs
 *.log
 logs/

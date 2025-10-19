@@ -11,6 +11,17 @@ A production-ready, horizontally scalable text-to-image diffusion model system b
 - **Docker Support**: Containerized deployment with Docker Compose
 - **Optimized Performance**: CPU-only mode with conservative defaults for stability
 
+## 🎨 Visual Showcase
+
+### Web Interface
+![ML-MDM Web Interface](docs/images/Screenshot%202025-10-18%20at%2011.54.16%20PM.png)
+
+### Image Generation Process
+![Generation Process Demo 1](docs/images/gif1-ezgif.com-video-to-gif-converter.gif)
+![Generation Process Demo 2](docs/images/gif2-ezgif.com-video-to-gif-converter.gif)
+![Generation Process Demo 3](docs/images/gif3-ezgif.com-video-to-gif-converter.gif)
+![Generation Process Demo 4](docs/images/gif4-ezgif.com-video-to-gif-converter.gif)
+
 ## 📊 Performance
 
 | Setup | Throughput | Use Case |
