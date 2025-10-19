@@ -17,10 +17,28 @@ A production-ready, horizontally scalable text-to-image diffusion model system b
 ![ML-MDM Web Interface](docs/images/Screenshot%202025-10-18%20at%2011.54.16%20PM.png)
 
 ### Image Generation Process
-![Generation Process Demo 1](docs/images/gif1-ezgif.com-video-to-gif-converter.gif)
-![Generation Process Demo 2](docs/images/gif2-ezgif.com-video-to-gif-converter.gif)
-![Generation Process Demo 3](docs/images/gif3-ezgif.com-video-to-gif-converter.gif)
-![Generation Process Demo 4](docs/images/gif4-ezgif.com-video-to-gif-converter.gif)
+<table>
+  <tr>
+    <td align="center">
+      <img src="docs/images/gif1-ezgif.com-video-to-gif-converter.gif" width="300" alt="Generation Process Demo 1">
+      <br><strong>Demo 1</strong>
+    </td>
+    <td align="center">
+      <img src="docs/images/gif2-ezgif.com-video-to-gif-converter.gif" width="300" alt="Generation Process Demo 2">
+      <br><strong>Demo 2</strong>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="docs/images/gif3-ezgif.com-video-to-gif-converter.gif" width="300" alt="Generation Process Demo 3">
+      <br><strong>Demo 3</strong>
+    </td>
+    <td align="center">
+      <img src="docs/images/gif4-ezgif.com-video-to-gif-converter.gif" width="300" alt="Generation Process Demo 4">
+      <br><strong>Demo 4</strong>
+    </td>
+  </tr>
+</table>
 
 ## 📊 Performance
 
