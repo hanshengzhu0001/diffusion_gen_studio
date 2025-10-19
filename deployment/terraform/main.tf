@@ -16,11 +16,11 @@ terraform {
     }
   }
   
-  backend "s3" {
-    bucket = "diffusion-terraform-state"
-    key    = "production/terraform.tfstate"
-    region = "us-west-2"
-  }
+  # backend "s3" {
+  #   bucket = "diffusion-terraform-state"
+  #   key    = "production/terraform.tfstate"
+  #   region = "us-east-1"
+  # }
 }
 
 provider "aws" {
@@ -171,25 +171,25 @@ resource "aws_ecr_repository" "diffusion_repo" {
     scan_on_push = true
   }
   
-  lifecycle_policy {
-    policy = jsonencode({
-      rules = [
-        {
-          rulePriority = 1
-          description  = "Keep last 30 images"
-          selection = {
-            tagStatus     = "tagged"
-            tagPrefixList = ["v"]
-            countType     = "imageCountMoreThan"
-            countNumber   = 30
-          }
-          action = {
-            type = "expire"
-          }
-        }
-      ]
-    })
-  }
+  # lifecycle_policy {
+  #   policy = jsonencode({
+  #     rules = [
+  #       {
+  #         rulePriority = 1
+  #         description  = "Keep last 30 images"
+  #         selection = {
+  #           tagStatus     = "tagged"
+  #           tagPrefixList = ["v"]
+  #           countType     = "imageCountMoreThan"
+  #           countNumber   = 30
+  #         }
+  #         action = {
+  #           type = "expire"
+  #         }
+  #       }
+  #     ]
+  #   })
+  # }
   
   tags = {
     Name = "${var.project_name}-ecr-repo"

@@ -218,3 +218,11 @@ class HealthChecker:
             health_status['error'] = str(e)
         
         return health_status
+
+
+
+
+
+
+
+

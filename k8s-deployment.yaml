@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-mdm-generator
+  labels:
+    app: ml-mdm-generator
+spec:
+  replicas: 3  # Start with 3 CPU instances
+  selector:
+    matchLabels:
+      app: ml-mdm-generator
+  template:
+    metadata:
+      labels:
+        app: ml-mdm-generator
+    spec:
+      containers:
+      - name: ml-mdm-generator
+        image: ml-mdm-generator:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: PYTHONPATH
+          value: "/app/ml-mdm/ml-mdm-matryoshka"
+        - name: CUDA_VISIBLE_DEVICES
+          value: ""
+        - name: PYTORCH_ENABLE_MPS_FALLBACK
+          value: "1"
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1000m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ml-mdm-generator-service
+spec:
+  selector:
+    app: ml-mdm-generator
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+  type: LoadBalancer
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: ml-mdm-generator-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: ml-mdm-generator
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80

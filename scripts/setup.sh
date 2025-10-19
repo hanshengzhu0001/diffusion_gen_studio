@@ -1,215 +1,113 @@
 #!/bin/bash
-# DiffusionArt Gen Studio - Development Setup Script
+
+# ML-MDM Horizontal Scaling Setup Script
+# This script sets up the complete load balancing environment
 
 set -e
 
-echo "🚀 Setting up DiffusionArt Gen Studio development environment..."
+echo "🚀 ML-MDM Horizontal Scaling Setup"
+echo "=================================="
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
-
-# Function to print colored output
-print_status() {
-    echo -e "${GREEN}[INFO]${NC} $1"
-}
-
-print_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
-}
-
-print_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-}
-
-# Check if Python 3.9+ is installed
-print_status "Checking Python version..."
-if command -v python3 &> /dev/null; then
-    PYTHON_VERSION=$(python3 -c 'import sys; print(".".join(map(str, sys.version_info[:2])))')
-    if python3 -c 'import sys; exit(0 if sys.version_info >= (3, 9) else 1)'; then
-        print_status "Python $PYTHON_VERSION found ✓"
-    else
-        print_error "Python 3.9+ required, found $PYTHON_VERSION"
-        exit 1
-    fi
-else
-    print_error "Python 3 not found. Please install Python 3.9+"
-    exit 1
-fi
-
-# Check if CUDA is available (optional)
-print_status "Checking CUDA availability..."
-if command -v nvidia-smi &> /dev/null; then
-    CUDA_VERSION=$(nvidia-smi --query-gpu=driver_version --format=csv,noheader,nounits | head -1)
-    print_status "NVIDIA GPU detected with driver version: $CUDA_VERSION ✓"
-    export CUDA_AVAILABLE=true
-else
-    print_warning "CUDA not detected. Will use CPU-only mode."
-    export CUDA_AVAILABLE=false
-fi
-
-# Create virtual environment
-print_status "Creating Python virtual environment..."
+# Check if virtual environment exists
 if [ ! -d "venv" ]; then
+    echo "📦 Creating virtual environment..."
     python3 -m venv venv
-    print_status "Virtual environment created ✓"
-else
-    print_status "Virtual environment already exists ✓"
 fi
 
 # Activate virtual environment
-print_status "Activating virtual environment..."
+echo "🔧 Activating virtual environment..."
 source venv/bin/activate
 
-# Upgrade pip
-print_status "Upgrading pip..."
-pip install --upgrade pip setuptools wheel
-
-# Install PyTorch (CUDA or CPU version)
-print_status "Installing PyTorch..."
-if [ "$CUDA_AVAILABLE" = true ]; then
-    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-    print_status "PyTorch with CUDA support installed ✓"
-else
-    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
-    print_status "PyTorch CPU-only version installed ✓"
-fi
-
-# Install requirements
-print_status "Installing Python dependencies..."
+# Install dependencies
+echo "📚 Installing dependencies..."
 pip install -r requirements.txt
 
-# Install development dependencies
-print_status "Installing development dependencies..."
-pip install pytest pytest-cov black flake8 mypy pre-commit jupyter
-
-# Setup pre-commit hooks
-print_status "Setting up pre-commit hooks..."
-pre-commit install
-
-# Create necessary directories
-print_status "Creating necessary directories..."
-mkdir -p data/train data/val models checkpoints logs cache
-
-# Download example model (placeholder)
-print_status "Setting up model cache directory..."
-export HF_HOME=$(pwd)/cache
-export TRANSFORMERS_CACHE=$(pwd)/cache
-export HF_DATASETS_CACHE=$(pwd)/cache
-
-# Test installation
-print_status "Testing installation..."
-python -c "
-import torch
-import transformers
-import diffusers
-import flask
-print('✓ PyTorch version:', torch.__version__)
-print('✓ CUDA available:', torch.cuda.is_available())
-if torch.cuda.is_available():
-    print('✓ CUDA devices:', torch.cuda.device_count())
-print('✓ Transformers version:', transformers.__version__)
-print('✓ Diffusers version:', diffusers.__version__)
-print('✓ Flask version:', flask.__version__)
-"
-
-# Create environment file
-print_status "Creating environment configuration..."
-cat > .env << EOF
-# DiffusionArt Gen Studio Environment Configuration
-FLASK_ENV=development
-LOG_LEVEL=INFO
-REDIS_HOST=localhost
-REDIS_PORT=6379
-MODEL_CACHE_DIR=./cache
-MAX_BATCH_SIZE=4
-DEFAULT_STEPS=30
-MAX_STEPS=50
-MAX_RESOLUTION=1024
-ENABLE_PROMETHEUS=true
-PROMETHEUS_PORT=8000
-
-# HuggingFace Cache
-HF_HOME=./cache
-TRANSFORMERS_CACHE=./cache
-HF_DATASETS_CACHE=./cache
-
-# CUDA Settings (if available)
-CUDA_VISIBLE_DEVICES=0
-EOF
-
-print_status "Environment file created ✓"
-
-# Setup VS Code configuration (if .vscode doesn't exist)
-if [ ! -d ".vscode" ]; then
-    print_status "Setting up VS Code configuration..."
-    mkdir -p .vscode
-    
-    cat > .vscode/settings.json << EOF
-{
-    "python.defaultInterpreterPath": "./venv/bin/python",
-    "python.linting.enabled": true,
-    "python.linting.flake8Enabled": true,
-    "python.linting.mypyEnabled": true,
-    "python.formatting.provider": "black",
-    "python.formatting.blackArgs": ["--line-length=88"],
-    "editor.formatOnSave": true,
-    "files.exclude": {
-        "**/__pycache__": true,
-        "**/*.pyc": true,
-        "**/venv": true,
-        "**/cache": true,
-        "**/models": true
-    }
-}
-EOF
-
-    cat > .vscode/launch.json << EOF
-{
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Flask API",
-            "type": "python",
-            "request": "launch",
-            "program": "inference/api/app.py",
-            "env": {
-                "FLASK_ENV": "development"
-            },
-            "console": "integratedTerminal"
-        },
-        {
-            "name": "Training",
-            "type": "python",
-            "request": "launch",
-            "program": "training/train_diffusion.py",
-            "args": ["--config", "training/configs/base_config.yaml"],
-            "console": "integratedTerminal"
-        }
-    ]
-}
-EOF
-
-    print_status "VS Code configuration created ✓"
+# Check if model file exists
+if [ ! -f "ml-mdm/ml-mdm-matryoshka/models/vis_model_64x64.pth" ]; then
+    echo "⚠️  Model file not found. Please ensure vis_model_64x64.pth is in ml-mdm/ml-mdm-matryoshka/models/"
+    echo "   You can download it from the ML-MDM repository or use your own trained model."
+    exit 1
 fi
 
-# Final instructions
+# Kill any existing processes
+echo "🧹 Cleaning up existing processes..."
+pkill -f "generate_sample.py" 2>/dev/null || true
+pkill -f "load_balancer.py" 2>/dev/null || true
+
+# Wait a moment for processes to terminate
+sleep 2
+
+# Start ML-MDM instances
+echo "🎨 Starting ML-MDM instances..."
+echo "   Instance 1 (port 8080)..."
+cd ml-mdm/ml-mdm-matryoshka
+source ../../venv/bin/activate
+python ml_mdm/clis/generate_sample.py --port 8080 --config_path configs/models/cc12m_64x64.yaml --model-file vis_model_64x64.pth &
+INSTANCE1_PID=$!
+
+echo "   Instance 2 (port 8081)..."
+python ml_mdm/clis/generate_sample.py --port 8081 --config_path configs/models/cc12m_64x64.yaml --model-file vis_model_64x64.pth &
+INSTANCE2_PID=$!
+
+echo "   Instance 3 (port 8082)..."
+python ml_mdm/clis/generate_sample.py --port 8082 --config_path configs/models/cc12m_64x64.yaml --model-file vis_model_64x64.pth &
+INSTANCE3_PID=$!
+
+cd ../..
+
+# Wait for instances to start
+echo "⏳ Waiting for instances to initialize (30 seconds)..."
+sleep 30
+
+# Start load balancer
+echo "⚖️  Starting load balancer..."
+python load_balancer.py &
+LOAD_BALANCER_PID=$!
+
+# Wait for load balancer to start
+sleep 5
+
+# Test the setup
+echo "🧪 Testing setup..."
+echo "   Testing Instance 1..."
+curl -s -o /dev/null -w "   Instance 1: %{http_code}\n" http://localhost:8080 || echo "   Instance 1: FAILED"
+
+echo "   Testing Instance 2..."
+curl -s -o /dev/null -w "   Instance 2: %{http_code}\n" http://localhost:8081 || echo "   Instance 2: FAILED"
+
+echo "   Testing Instance 3..."
+curl -s -o /dev/null -w "   Instance 3: %{http_code}\n" http://localhost:8082 || echo "   Instance 3: FAILED"
+
+echo "   Testing Load Balancer..."
+curl -s -o /dev/null -w "   Load Balancer: %{http_code}\n" http://localhost:5000 || echo "   Load Balancer: FAILED"
+
 echo ""
-echo "🎉 Setup completed successfully!"
+echo "🎉 Setup Complete!"
+echo "=================="
 echo ""
-echo "Next steps:"
-echo "1. Activate the virtual environment: source venv/bin/activate"
-echo "2. Start development server: python inference/api/app.py"
-echo "3. Run tests: pytest tests/"
-echo "4. Start training: python training/train_diffusion.py --config training/configs/base_config.yaml"
+echo "🌐 Access Points:"
+echo "   Load Balancer Dashboard: http://localhost:5000"
+echo "   Instance 1: http://localhost:8080"
+echo "   Instance 2: http://localhost:8081"
+echo "   Instance 3: http://localhost:8082"
 echo ""
-echo "For Docker deployment:"
-echo "1. Build image: docker build -f deployment/docker/Dockerfile -t diffusion-gen-studio ."
-echo "2. Run container: docker run -p 5000:5000 diffusion-gen-studio"
+echo "📊 Features:"
+echo "   ✅ Real-time monitoring"
+echo "   ✅ Load balancing"
+echo "   ✅ Health checks"
+echo "   ✅ Model caching"
 echo ""
-echo "For Kubernetes deployment:"
-echo "1. Apply manifests: kubectl apply -f deployment/k8s/"
+echo "🛑 To stop all services:"
+echo "   pkill -f 'generate_sample.py'"
+echo "   pkill -f 'load_balancer.py'"
 echo ""
-print_status "Happy coding! 🚀"
+echo "🚀 Ready to generate images with horizontal scaling!"
+
+# Save PIDs for cleanup
+echo $INSTANCE1_PID > .instance1.pid
+echo $INSTANCE2_PID > .instance2.pid
+echo $INSTANCE3_PID > .instance3.pid
+echo $LOAD_BALANCER_PID > .load_balancer.pid
+
+echo ""
+echo "💡 Open http://localhost:5000 in your browser to start generating images!"

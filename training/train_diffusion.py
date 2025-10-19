@@ -28,16 +28,16 @@ except ImportError:
     class DataFlow: pass
     class MultiGPURunner: pass
 
-# ml_mdm imports (placeholder - would be actual imports)
+# ml_mdm imports from Apple's implementation
 try:
-    from ml_mdm import MultiModalDiffusionModel, TrainingConfig
-    from ml_mdm.schedulers import CosineAnnealingLR
-except ImportError:
-    print("ml_mdm not available - using placeholder implementation")
-    # Placeholder classes for demo
-    class MultiModalDiffusionModel: pass
-    class TrainingConfig: pass
-    class CosineAnnealingLR: pass
+    import sys
+    import os
+    sys.path.append(os.path.join(os.path.dirname(__file__), '../../ml-mdm'))
+    from ml_mdm import config, models, data, training
+    print("Apple ml-mdm successfully imported")
+except ImportError as e:
+    print(f"ml_mdm not available: {e}")
+    print("Using simplified training implementation")
 
 from models.diffusion_architecture import UNetModel
 from data.dataset_loader import TextImageDataset

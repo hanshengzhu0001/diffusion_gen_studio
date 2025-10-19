@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ml-mdm-config
+data:
+  # Model configuration
+  MODEL_CONFIG: "configs/models/cc12m_64x64.yaml"
+  MODEL_FILE: "vis_model_64x64.pth"
+  
+  # Generation parameters
+  DEFAULT_BATCH_SIZE: "4"  # Conservative batch size for CPU
+  DEFAULT_INFERENCE_STEPS: "8"
+  DEFAULT_GUIDANCE_SCALE: "3.0"
+  
+  # Server configuration
+  SERVER_PORT: "8080"
+  WORKERS: "1"
+  
+  # Environment settings
+  PYTHONPATH: "/app/ml-mdm/ml-mdm-matryoshka"
+  CUDA_VISIBLE_DEVICES: ""
+  PYTORCH_ENABLE_MPS_FALLBACK: "1"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ml-mdm-secrets
+type: Opaque
+data:
+  # Add any API keys or secrets here if needed
+  # api-key: <base64-encoded-value>

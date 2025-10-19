@@ -1,0 +1,130 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-mdm-generator-advanced
+  labels:
+    app: ml-mdm-generator
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ml-mdm-generator
+  template:
+    metadata:
+      labels:
+        app: ml-mdm-generator
+    spec:
+      containers:
+      - name: ml-mdm-generator
+        image: ml-mdm-generator:latest
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: ml-mdm-config
+        - secretRef:
+            name: ml-mdm-secrets
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1000m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+        volumeMounts:
+        - name: model-storage
+          mountPath: /app/models
+        - name: output-storage
+          mountPath: /app/outputs
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+      volumes:
+      - name: model-storage
+        persistentVolumeClaim:
+          claimName: ml-mdm-models-pvc
+      - name: output-storage
+        persistentVolumeClaim:
+          claimName: ml-mdm-outputs-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ml-mdm-models-pvc
+spec:
+  accessModes:
+    - ReadOnlyMany
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ml-mdm-outputs-pvc
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ml-mdm-generator-service
+spec:
+  selector:
+    app: ml-mdm-generator
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+  type: LoadBalancer
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: ml-mdm-generator-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: ml-mdm-generator-advanced
+  minReplicas: 2
+  maxReplicas: 15  # Scale up to 15 instances for high demand
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 15
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 10
+        periodSeconds: 60
